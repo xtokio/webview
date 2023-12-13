@@ -22,9 +22,11 @@ jobs:
         with:
           crystal: ${{matrix.crystal}}
       - uses: actions/checkout@v2
+      - name: Update system
+        run: sudo apt update
       - name: Install dependencies
         run: sudo apt install libgtk-3-dev libwebkit2gtk-4.0-dev
-      - name: Install crystal land dependencies
+      - name: Install crystal lang dependencies
         run: shards install
       - name: Compile library
         run: make
