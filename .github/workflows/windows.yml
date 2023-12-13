@@ -1,0 +1,34 @@
+name: Windows CI
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+  schedule:
+    - cron: "0 6 * * 6"
+jobs:
+  build-windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Install Crystal
+        uses: crystal-lang/install-crystal@v1
+      - name: Enable Developer Command Prompt
+        uses: ilammy/msvc-dev-cmd@cec98b9d092141f74527d0afa6feb2af698cfe89 # v1.12.1
+      - name: Install Webview2 SDK
+        run: |
+          mkdir libs\webview2
+          nuget.exe install Microsoft.Web.Webview2 -Version 1.0.1150.38 -OutputDirectory libs\webview2
+          copy libs\webview2\microsoft.web.webview2.1.0.1150.38\build\native\include\*.h ext\
+      - name: Install crystal land dependencies
+        run: shards install
+      - name: Compile library
+        shell: powershell
+        run: |
+          cd ext
+          cl /D "WEBVIEW_API=__declspec(dllexport)" /std:c++17 /EHsc webview.cc /link /DLL "/OUT:..\webview.dll"
+          cd ..
+          copy webview.lib (crystal env CRYSTAL_LIBRARY_PATH)
+      - name: Run tests
+        run: crystal spec
